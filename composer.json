@@ -1,0 +1,13 @@
+{
+    "name": "shtraf/shtraf",
+    "type": "project",
+    "authors": [
+        {
+            "name": "griff9214",
+            "email": "37296587+griff9214@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "~6.0"
+    }
+}
