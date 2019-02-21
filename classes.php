@@ -1,7 +1,6 @@
 <?
 require_once 'vendor/autoload.php';
 
-$cars = file('carlist.txt');
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
@@ -26,12 +25,14 @@ interface ResponseDecoder
 
 class Car
 {
+    public $id;
     public $number;
     public $region;
     public $stsNumber;
 
-    public function __construct($number, $region, $stsNumber)
+    public function __construct($id, $number, $region, $stsNumber)
     {
+        $this->id = $id;
         $this->number = $number;
         $this->region = $region;
         $this->stsNumber = $stsNumber;
@@ -71,14 +72,25 @@ class Fine
     {
         $this->koapSt = $koapSt;
         $this->koapText = $koapText;
-        $this->fineDate = $fineDate;
+        $this->fineDate = DateTime::createFromFormat("YYYY-MM-DD", $fineDate);
         $this->sum = $sum;
         $this->billId = $billId;
         $this->hasDiscount = $hasDiscount;
         $this->hasPhoto = $hasPhoto;
         $this->divId = $divId;
         $this->discountSum = $discountSum;
-        $this->discountUntil = $discountUntil;
+        $this->discountUntil = DateTime::createFromFormat("YYYY-MM-DD",$discountUntil);
+    }
+
+    public function toString()
+    {
+        return "
+                Статья: {$this->koapSt}\r\n
+                Нарушение: {$this->koapText}\r\n
+                Дата штрафа: {$this->fineDate}\r\n
+                Сумма без скидки: {$this->koapSt}\r\n
+                № постановления: {$this->billId}\r\n  
+        ";
     }
 }
 
@@ -116,7 +128,7 @@ class JsonResponseDecoder implements ResponseDecoder
 
     public static function getFines($response)
     {
-        $fines=[];
+        $fines = [];
         foreach (json_decode($response, true)["data"]["finesList"] as $item) {
             $fines[] = new Fine(...array_values($item));
         }
@@ -149,7 +161,23 @@ class TxtCarList implements CarList
     public function getCars()
     {
         foreach (file($this->fname) as $carParams) {
-            $cars[] = new Car(...explode($this->delimiter, $carParams));
+            $cars[] = new Car(...array_map("trim", explode($this->delimiter, $carParams)));
+        }
+        return $cars;
+    }
+}
+
+class DBCarList implements CarList {
+    private $db;
+    public function __construct(PDO $db)
+    {
+        $this->db = $db;
+    }
+    public function getCars()
+    {
+        $carsData = $this->db->query("SELECT * FROM `cars`")->fetchAll(PDO::FETCH_NUM);
+        foreach ($carsData as $carData){
+            $cars[] = new Car(...$carData);
         }
         return $cars;
     }
@@ -184,7 +212,7 @@ class Requester
 
     public function secureCodeRequest(Car $car)
     {
-        $response = (string) $this->client->request('GET', "https://shtrafyonline.ru/ajax/fines_gibdd_queue?num={$car->number}&reg={$car->region}&sts={$car->stsNumber}", [
+        $response = (string)$this->client->request('GET', "https://shtrafyonline.ru/ajax/fines_gibdd_queue?num={$car->number}&reg={$car->region}&sts={$car->stsNumber}", [
             'headers' => $this->headers,
             'verify' => false,
             'cookies' => $this->jar,
@@ -205,7 +233,7 @@ class Requester
 
     public function finesRequest($secureCode, $delay = 0)
     {
-        $finesResponse = (string) $this->client->request('GET', 'https://shtrafyonline.ru/ajax/fines_gibdd_queue_result', [
+        $finesResponse = (string)$this->client->request('GET', 'https://shtrafyonline.ru/ajax/fines_gibdd_queue_result', [
             'headers' => $this->headers,
             'verify' => false,
             'cookies' => $this->jar,
@@ -217,17 +245,16 @@ class Requester
         if (JsonResponseDecoder::checkErrors($finesResponse)) {
             return 'error while parsing Fines';
         } elseif (!JsonResponseDecoder::checkErrors($finesResponse) && !JsonResponseDecoder::checkState($finesResponse)) {
-            echo "state 0: new querry with delay $delay\r\n";
-            $this->finesRequest($secureCode, 10000);
+            return $this->finesRequest($secureCode, 10000);
         } elseif (!JsonResponseDecoder::checkErrors($finesResponse) && JsonResponseDecoder::checkState($finesResponse)) {
             //$finesResponse = '{"error":0,"state":1,"data":{"error":0,"finesList":[{"koapSt":"","koapText":"\u041d\u0430\u0440\u0443\u0448\u0435\u043d\u0438\u0435 \u043f\u0440\u0430\u0432\u0438\u043b \u0440\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u044f \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442\u043d\u043e\u0433\u043e \u0441\u0440\u0435\u0434\u0441\u0442\u0432\u0430\r\n\r\n\u041c\u0435\u0441\u0442\u043e \u043d\u0430\u0440\u0443\u0448\u0435\u043d\u0438\u044f:\r\n\u041c\u041e\u0421\u041a\u0412\u0410 \u0413. \u041c\u041a\u0410\u0414, 58 \u041a\u041c 950 \u041c, \u041f-\u041e\u041f\u041e\u0420\u0410, \u0412\u041d\u0423\u0422\u0420\u0415\u041d\u041d\u042f\u042f \u0421\u0422\u041e\u0420\u041e\u041d\u0410\r\n\r\n\u041c\u0430\u0440\u043a\u0430 \u0430\u0432\u0442\u043e \u043d\u0430\u0440\u0443\u0448\u0438\u0442\u0435\u043b\u044f:\r\n\u0428\u041a\u041e\u0414\u0410 \u041e\u041a\u0422\u0410\u0412\u0418\u042f\r\n\r\n","fineDate":"2018-11-28","sum":"1500","billId":"18810177181128202096","hasDiscount":0,"hasPhoto":1,"divId":"1145000","discountSum":"0","discountUntil":"0000-00-00"}],"count":1,"inGarage":0},"params":{"num":"\u0415414\u0415\u0412","reg":"799","sts":"7756261168"},"type":0}';
             return $finesResponse;
         }
     }
 
-    public function photoRequest(Fine $fine)
+    public function photoIDsRequest(Fine $fine)
     {
-        $res = $this->client->request('GET', 'https://shtrafyonline.ru/ajax/get_photos', [
+        $response = (string)$this->client->request('GET', 'https://shtrafyonline.ru/ajax/get_photos', [
             'headers' => $this->headers,
             'verify' => false,
             'cookies' => $this->jar,
@@ -235,45 +262,24 @@ class Requester
             'query' => [
                 'post' => $fine->billId,
             ],
-        ]);
-        return (string) $res->getBody();
+        ])->getBody();
+        return $response;
         //return '{"pics":[{"n":1,"r":269823338},{"n":2,"r":1559088186}],"count":2}';
     }
 
     public function photoSaver($photoId)
     {
-        $resource = fopen("photo/{$photoId['r']}.jpg", 'w');
-        $this->client->request('GET', "https://shtrafyonline.ru/ajax/photo_temp?n={$photoId['n']}&{$photoId['r']}.jpg", [
+        $request = $this->client->request('GET', "https://shtrafyonline.ru/ajax/photo_temp?n={$photoId['n']}&{$photoId['r']}.jpg", [
             'headers' => $this->headers,
             'verify' => false,
             'cookies' => $this->jar,
             'proxy' => $this->proxy,
-            'sink' => $resource
+            //'sink' => $resource
         ]);
-        fclose($resource);
+        return $request->getBody();
     }
 
 }
 
-$carlist = new TxtCarList("carlist.txt", ':');
-
-$car = $carlist->getCars()[0];
-
-$requester = new Requester();
-
-$secureCode = JsonResponseDecoder::getSecureCode($requester->secureCodeRequest($car));
-
-$finesResponse = $requester->finesRequest($secureCode);
-var_dump ($finesResponse);
-//$finesResponse = '{"error":0,"state":1,"data":{"error":0,"finesList":[{"koapSt":"","koapText":"\u041d\u0430\u0440\u0443\u0448\u0435\u043d\u0438\u0435 \u043f\u0440\u0430\u0432\u0438\u043b \u0440\u0430\u0441\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u044f \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442\u043d\u043e\u0433\u043e \u0441\u0440\u0435\u0434\u0441\u0442\u0432\u0430\r\n\r\n\u041c\u0435\u0441\u0442\u043e \u043d\u0430\u0440\u0443\u0448\u0435\u043d\u0438\u044f:\r\n\u041c\u041e\u0421\u041a\u0412\u0410 \u0413. \u041c\u041a\u0410\u0414, 58 \u041a\u041c 950 \u041c, \u041f-\u041e\u041f\u041e\u0420\u0410, \u0412\u041d\u0423\u0422\u0420\u0415\u041d\u041d\u042f\u042f \u0421\u0422\u041e\u0420\u041e\u041d\u0410\r\n\r\n\u041c\u0430\u0440\u043a\u0430 \u0430\u0432\u0442\u043e \u043d\u0430\u0440\u0443\u0448\u0438\u0442\u0435\u043b\u044f:\r\n\u0428\u041a\u041e\u0414\u0410 \u041e\u041a\u0422\u0410\u0412\u0418\u042f\r\n\r\n","fineDate":"2018-11-28","sum":"1500","billId":"18810177181128202096","hasDiscount":0,"hasPhoto":1,"divId":"1145000","discountSum":"0","discountUntil":"0000-00-00"}],"count":1,"inGarage":0},"params":{"num":"\u0415414\u0415\u0412","reg":"799","sts":"7756261168"},"type":0}';
-$fines = JsonResponseDecoder::getFines($finesResponse);
-
-$photosJson = $requester->photoRequest($fines[0]);
-
-$photoIds = JsonResponseDecoder::getPhotoIds($photosJson);
-//
-foreach ($photoIds as $photoId) {
-    $requester->photoSaver($photoId);
-}
 
 ?>
