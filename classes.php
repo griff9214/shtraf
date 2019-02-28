@@ -32,10 +32,10 @@ class Car
 
     public function __construct($id, $number, $region, $stsNumber)
     {
-        $this->id = $id;
-        $this->number = $number;
-        $this->region = $region;
-        $this->stsNumber = $stsNumber;
+        $this->id = trim($id);
+        $this->number = trim($number);
+        $this->region = trim($region);
+        $this->stsNumber = trim($stsNumber);
 
     }
 
@@ -72,25 +72,19 @@ class Fine
     {
         $this->koapSt = $koapSt;
         $this->koapText = $koapText;
-        $this->fineDate = DateTime::createFromFormat("YYYY-MM-DD", $fineDate);
+        $this->fineDate = $fineDate;
         $this->sum = $sum;
         $this->billId = $billId;
         $this->hasDiscount = $hasDiscount;
         $this->hasPhoto = $hasPhoto;
         $this->divId = $divId;
         $this->discountSum = $discountSum;
-        $this->discountUntil = DateTime::createFromFormat("YYYY-MM-DD",$discountUntil);
+        $this->discountUntil = $discountUntil;
     }
 
     public function toString()
     {
-        return "
-                Статья: {$this->koapSt}\r\n
-                Нарушение: {$this->koapText}\r\n
-                Дата штрафа: {$this->fineDate}\r\n
-                Сумма без скидки: {$this->koapSt}\r\n
-                № постановления: {$this->billId}\r\n  
-        ";
+        return "Статья: {$this->koapSt} Нарушение: {$this->koapText} Дата штрафа: {$this->fineDate} Сумма без скидки: {$this->koapSt} № постановления: {$this->billId}";
     }
 }
 
@@ -167,19 +161,28 @@ class TxtCarList implements CarList
     }
 }
 
-class DBCarList implements CarList {
+class DBCarList implements CarList
+{
     private $db;
+
     public function __construct(PDO $db)
     {
         $this->db = $db;
     }
+
     public function getCars()
     {
         $carsData = $this->db->query("SELECT * FROM `cars`")->fetchAll(PDO::FETCH_NUM);
-        foreach ($carsData as $carData){
+        foreach ($carsData as $carData) {
             $cars[] = new Car(...$carData);
         }
         return $cars;
+    }
+
+    public function isUnique(Fine $fine)
+    {
+        $res = $this->db->query("SELECT * FROM shtrafy.fines WHERE billId = '$fine->billId' LIMIT 1");
+        return ($res->rowCount() == 0) ? 0 : 1;
     }
 }
 
