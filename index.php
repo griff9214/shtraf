@@ -33,45 +33,64 @@ $cars = $carlist->getCars();
         <th scope="col">#</th>
         <th scope="col">Марка авто</th>
         <th scope="col">ГРЗ</th>
-        <th scope="col">№ СТС</th>
+        <th scope="col" colspan="2">№ СТС</th>
     </tr>
     </thead>
-</table>
+    <tbody>
+    <? foreach ($cars as $car) {
+        $fines = $carlist->getAllFines($car);
+        $finesCount = $carlist->getFinesCount($car);
+        $finesCounter = 0;
+        ?>
 
-<? foreach ($cars as $car) {
-    $res = $DB->query("SELECT * FROM fines WHERE car_id = {$car->id}");
-    $fines = [];
-    while ($fines[] = $res->fetchObject()) {
-        $i++;
-    }
-    ?>
-    <table class="table table-hover">
-        <tbody>
         <tr role="button" data-toggle="collapse" data-target="#collapseExample<?= ++$n ?>" aria-expanded="true"
             aria-controls="collapseExample<?= $n ?>" style="cursor: pointer;">
-            <td scope="row"><?= $n ?></td>
+            <td scope="row"><?= $n ?></span></td>
             <td scope="row"><?= "auto mark" ?></td>
             <td scope="row"><? echo "{$car->number} {$car->region}" ?></td>
             <td scope="row"><?= $car->stsNumber ?></td>
+            <td scope="row" style="text-align: right;">
+                <button type="button" class="btn btn-primary">
+                    Посмотреть штрафы <span class="badge badge-danger"><?= $finesCount ?></span>
+                </button>
+            </td>
         </tr>
-        </tbody>
-    </table>
-        <div class="collapse" id="collapseExample<?= $n ?>">
-            <table class="table table-hover table-dark">
-                <tbody>
-                <? foreach ($fines as $fine) { ?>
-                    <tr>
-                        <td scope="row"><?= $fine->billId ?></td>
-                        <td scope="row"><?= $fine->sum ?></td>
-                        <td scope="row"><?= $fine->fineDate ?></td>
-                        <td scope="row"><?= $fine->parseDate ?></td>
-                        <td scope="row"><?= $fine->koapText ?></td>
-                    </tr>
-                <? } ?>
-                </tbody>
-
-            </table>
-        </div>
-<? } ?>
+        <tr style="background-color: transparent">
+            <td colspan="5" style="padding: 0;margin: 0;">
+                <div class="collapse" id="collapseExample<?= $n ?>">
+                    <table class="table table-hover table-dark" style="background-color: #343a40;">
+                        <tbody>
+                        <? foreach ($fines as $fine) { ?>
+                            <tr>
+                                <td scope="row"><?= ++$finesCounter ?></td>
+                                <td scope="row"><?= $fine->billId ?>
+                                    <? if ($fine->isNew()) { ?>
+                                        <span class="badge badge-success">NEW!</span>
+                                    <? } ?></td>
+                                <td scope="row">
+                                    <?= $fine->sum ?>
+                                    <? if ($fine->discountSum != 0) { ?>
+                                        <span class="badge badge-success" data-toggle="tooltip" data-placement="top"
+                                              title="Скидка до <?= $fine->discountUntil ?>"><?= $fine->discountSum ?></span>
+                                    <? } ?>
+                                </td>
+                                <td scope="row"><?= $fine->fineDate ?></td>
+                                <td scope="row"><?= $fine->parseDate ?></td>
+                                <td scope="row" style="width: 40%"><?= $fine->koapText ?></td>
+                            </tr>
+                        <? } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    <? } ?>
+    </tbody>
+</table>
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
 </body>
 </html>

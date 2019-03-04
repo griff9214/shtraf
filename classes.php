@@ -57,6 +57,7 @@ class Car
 
 class Fine
 {
+    public $id;
     public $koapSt;
     public $koapText;
     public $fineDate;
@@ -67,9 +68,12 @@ class Fine
     public $divId;
     public $discountSum;
     public $discountUntil;
+    public $car_id;
+    public $parseDate;
 
-    public function __construct($koapSt, $koapText, $fineDate, $sum, $billId, $hasDiscount, $hasPhoto, $divId, $discountSum, $discountUntil)
+    public function __construct($id = null, $koapSt = null, $koapText = null, $fineDate = null, $sum = null, $billId = null, $hasDiscount = null, $hasPhoto = null, $divId = null, $discountSum = null, $discountUntil = null, $parseDate = null, $car_id = null)
     {
+        $this->id = $id;
         $this->koapSt = $koapSt;
         $this->koapText = $koapText;
         $this->fineDate = $fineDate;
@@ -80,11 +84,18 @@ class Fine
         $this->divId = $divId;
         $this->discountSum = $discountSum;
         $this->discountUntil = $discountUntil;
+        $this->car_id = $car_id;
+        $this->parseDate = $parseDate;
     }
 
     public function toString()
     {
         return "Статья: {$this->koapSt} Нарушение: {$this->koapText} Дата штрафа: {$this->fineDate} Сумма без скидки: {$this->koapSt} № постановления: {$this->billId}";
+    }
+
+    public function isNew()
+    {
+        return (strtotime($this->parseDate) >= time() - 86400) ? 1 : 0;
     }
 }
 
@@ -184,6 +195,16 @@ class DBCarList implements CarList
         $res = $this->db->query("SELECT * FROM shtrafy.fines WHERE billId = '$fine->billId' LIMIT 1");
         return ($res->rowCount() == 0) ? 0 : 1;
     }
+
+    public function getAllFines(Car $car)
+    {
+        return $this->db->query("SELECT * FROM fines WHERE car_id = {$car->id}")->fetchAll(PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE, "Fine");
+    }
+
+    public function getFinesCount(Car $car)
+    {
+        return $this->db->query("SELECT COUNT(id) FROM fines WHERE car_id = {$car->id}")->fetch(PDO::FETCH_NUM)[0];
+    }
 }
 
 class Requester
@@ -277,7 +298,6 @@ class Requester
             'verify' => false,
             'cookies' => $this->jar,
             'proxy' => $this->proxy,
-            //'sink' => $resource
         ]);
         return $request->getBody();
     }
