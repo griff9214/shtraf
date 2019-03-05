@@ -1,5 +1,5 @@
 <?
-require_once 'vendor/autoload.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 
 use GuzzleHttp\Client;
@@ -71,7 +71,7 @@ class Fine
     public $car_id;
     public $parseDate;
 
-    public function __construct($id = null, $koapSt = null, $koapText = null, $fineDate = null, $sum = null, $billId = null, $hasDiscount = null, $hasPhoto = null, $divId = null, $discountSum = null, $discountUntil = null, $parseDate = null, $car_id = null)
+    public function __construct($koapSt = null, $koapText = null, $fineDate = null, $sum = null, $billId = null, $hasDiscount = null, $hasPhoto = null, $divId = null, $discountSum = null, $discountUntil = null, $parseDate = null, $car_id = null, $id = null)
     {
         $this->id = $id;
         $this->koapSt = $koapSt;
