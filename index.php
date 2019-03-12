@@ -1,10 +1,12 @@
 <?
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+
+use classes\DBCarList;
 
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/classes.php';
 require_once __DIR__ . '/config.php';
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
 $carlist = new DBCarList($DB);
 $cars = $carlist->getCars();

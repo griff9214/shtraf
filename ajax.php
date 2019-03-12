@@ -1,5 +1,4 @@
 <?
-require_once 'classes.php';
 require_once 'config.php';
 
 $fineid = $_GET['fineid'];

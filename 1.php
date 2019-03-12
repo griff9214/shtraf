@@ -1,6 +1,5 @@
 <?
 require_once 'vendor/autoload.php';
-require_once 'classes.php';
 require_once 'config.php';
 
 

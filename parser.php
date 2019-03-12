@@ -1,8 +1,11 @@
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
-require_once __DIR__.'/classes.php';
-require_once __DIR__.'/config.php';
+use classes\DBCarList;
+use classes\JsonResponseDecoder;
+use classes\Requester;
+
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/config.php';
 
 //$carlist = new TxtCarList("carlist.txt", ':');
 $requester = new Requester();
@@ -46,12 +49,9 @@ foreach ($carlist->getCars() as $currentCar) {
                 //------- Save fine as txt
 
 
-                //---------- Save Fine to DB
-                $query = "INSERT INTO shtrafy.fines (koapSt, koapText, fineDate, sum, billId, hasDiscount, hasPhoto, divId, discountSum, discountUntil, car_id) VALUES ('{$currentFine->koapSt}','{$currentFine->koapText}', '{$currentFine->fineDate}', '{$currentFine->sum}', '{$currentFine->billId}', '{$currentFine->hasDiscount}', '{$currentFine->hasPhoto}', '{$currentFine->divId}', '{$currentFine->discountSum}', '{$currentFine->discountUntil}', '{$currentCar->id}')";
-                $q = $DB->prepare($query);
-                $q->execute();
-                $lastId = $DB->query("SELECT LAST_INSERT_ID()")->fetch(PDO::FETCH_NUM)[0];
-                //---------- Save Fine to DB
+                //---------- Save Fine to DB and get id of last insert
+                $lastId = $carlist->saveFine($currentFine, $currentCar->id);
+                //---------- Save Fine to DB and get id of last insert
 
                 //------- Save Photos JPG
                 if ($currentFine->hasPhoto) {
@@ -63,7 +63,6 @@ foreach ($carlist->getCars() as $currentCar) {
                         $query = "INSERT INTO shtrafy.photos (imgUrl, fineId) VALUES ('{$currentDir}/{$photoId['r']}.jpg', '{$lastId}')";
                         $q = $DB->prepare($query);
                         $q->execute();
-                        echo "http://shtraf/{$currentDir}/{$photoId['r']}.jpg\r\n";
                     }
                 }
                 //------- Save Photos JPG
