@@ -12,17 +12,17 @@ use classes;
 
 class JsonResponseDecoder implements ResponseDecoder
 {
-    public static function checkErrors($response)
+    public static function checkErrors($response) : bool
     {
-        return (json_decode($response)->error) ? 1 : 0;
+        return (bool)(json_decode($response)->error) ? 1 : 0;
     }
 
-    public static function checkState($response)
+    public static function checkState($response) : bool
     {
-        return (json_decode($response)->state) ? 1 : 0;
+        return (bool)(json_decode($response)->state) ? 1 : 0;
     }
 
-    public static function getFines($response)
+    public static function getFines($response) :array
     {
         $fines = [];
         foreach (json_decode($response, true)["data"]["finesList"] as $item) {

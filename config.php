@@ -11,7 +11,8 @@ $options = array(
 
 $DB = new PDO($dsn, $username, $password, $options);
 class Config {
-    const USE_PROXY = true;
+    const USE_PROXY = false;
+    const DEBUG = false;
     const HTTP_PROXY = "127.0.0.1:8888";
     const HTTPS_PROXY = "127.0.0.1:8888";
 
