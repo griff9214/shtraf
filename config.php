@@ -15,6 +15,7 @@ class Config {
     const DEBUG = false;
     const HTTP_PROXY = "127.0.0.1:8888";
     const HTTPS_PROXY = "127.0.0.1:8888";
+    const FINES_DIR = __DIR__ . "/FINES";
 
     public static $headers = [
             'Host' => 'shtrafyonline.ru',

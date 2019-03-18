@@ -8,8 +8,6 @@
 
 namespace classes;
 
-use classes;
-
 class JsonResponseDecoder implements ResponseDecoder
 {
     public static function checkErrors($response): bool
@@ -26,7 +24,7 @@ class JsonResponseDecoder implements ResponseDecoder
     {
         $fines = [];
         foreach (json_decode($response, true)["data"]["finesList"] as $item) {
-            $fines[] = new classes\Fine(...array_values($item));
+            $fines[] = new Fine(...array_values($item));
         }
         return $fines;
     }

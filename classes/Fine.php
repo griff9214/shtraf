@@ -44,4 +44,9 @@ class Fine
     {
         return (strtotime($this->parseDate) >= time() - 86400) ? 1 : 0;
     }
+
+    public function hasPhoto(): bool
+    {
+        return ($this->hasPhoto == 1) ? true : false;
+    }
 }
