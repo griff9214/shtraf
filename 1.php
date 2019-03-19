@@ -1,23 +1,16 @@
 <?
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/config.php';
 
-use classes\Controller;
-use classes\Fine;
+use classes\Config;
+use classes\Filesystem;
 
-error_reporting(E_ALL);
+$fileSys = new Filesystem(Config::FINES_DIR);
 
-$controller = new Controller();
+$fileSys->createDir("Р343ОХ");
+$fileSys->setCurrentDir("Р343ОХ");
 
-$controller->set('fine', function (){
-    return new Fine();
-});
-
-
-$fine = $controller->get('fine');
-$fine1 = $controller->get('fine');
-$fine2 = $controller->get('fine');
-
-
-var_dump($fine);
-var_dump($fine1);
-var_dump($fine2);
+$fileSys->createDir("54654654654");
+$fileSys->setCurrentDir("54654654654");
+$fileSys->levelUp();
+$fileSys->levelUp();

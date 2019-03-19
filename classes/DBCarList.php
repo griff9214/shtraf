@@ -26,7 +26,7 @@ class DBCarList implements CarList
     public function isUnique(Fine $fine)
     {
         $res = $this->query("SELECT * FROM fines WHERE billId = '$fine->billId' LIMIT 1");
-        return ($res->rowCount() == 0) ? 0 : 1;
+        return ($res->rowCount() == 0) ? 1 : 0;
     }
 
     public function getAllFines(Car $car)

@@ -32,8 +32,7 @@ $finesResponse = '{"error":0,"state":1,"data":{"error":0,"finesList":[{"koapSt":
         }
 
         foreach ($fines as $currentFine) {
-            if (!$carlist->isUnique($currentFine)) {
-
+            if ($carlist->isUnique($currentFine)) {
                 if ($fileSystem->createDir("{$currentFine->billId}")) {
                     $fileSystem->setCurrentDir("{$currentFine->billId}");
                 }
@@ -56,12 +55,12 @@ $finesResponse = '{"error":0,"state":1,"data":{"error":0,"finesList":[{"koapSt":
                     foreach ($photoIds as $photoId) {
                         $photo = $requester->downloadPhoto($photoId);
                         $fileSystem->savePhoto("{$photoId['r']}.jpg", $photo);
-                        $carlist->query("INSERT INTO photos (imgUrl, fineId) VALUES ('{$currentDir}/{$photoId['r']}.jpg', '{$lastId}'");
+                        $carlist->query("INSERT INTO photos (imgUrl, fineId) VALUES ('{$fileSystem->getCurrentDir()}/{$photoId['r']}.jpg', '{$lastId}'");
                     }
                 }
                 //------- Save Photos JPG
-
             }
+            $fileSystem->levelUp();
         }
         echo "{$currentCar->number} - " . count($fines) . " штрафов\r\n";
     } else {

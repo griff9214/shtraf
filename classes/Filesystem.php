@@ -18,25 +18,39 @@ class Filesystem
         if (!is_dir($dir)) {
             mkdir($dir);
         }
-        $this->currentDir = $dir;
+        $this->currentDir = rtrim(str_replace('\\', '/', $dir), '\\\/ ');
     }
 
     public function createDir($dir): bool
     {
-        if (!is_dir("{$this->currentDir}/$dir")) {
-            return mkdir("{$this->currentDir}/$dir");
-        } else {
+        if (is_dir("{$this->currentDir}/$dir")) {
             return true;
         }
+        return mkdir("{$this->currentDir}/$dir");
+
     }
 
     public function setCurrentDir($dir)
     {
-        $this->currentDir = "{$this->currentDir}/$dir";
+        $this->currentDir = "$this->currentDir/$dir";
     }
 
     public function savePhoto($name, $photo)
     {
         file_put_contents("{$this->currentDir}/$name", $photo);
+    }
+
+    public function levelUp()
+    {
+        $this->currentDir = rtrim($this->currentDir, "\//");
+        $this->currentDir = substr($this->currentDir, 0, strrpos($this->currentDir, '/'));
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrentDir(): string
+    {
+        return $this->currentDir;
     }
 }
