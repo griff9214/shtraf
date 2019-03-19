@@ -18,7 +18,7 @@ class Filesystem
         if (!is_dir($dir)) {
             mkdir($dir);
         }
-        $this->currentDir = rtrim(str_replace('\\', '/', $dir), '\\\/ ');
+        $this->currentDir = $this->refactorPath($dir);
     }
 
     public function createDir($dir): bool
@@ -52,5 +52,15 @@ class Filesystem
     public function getCurrentDir(): string
     {
         return $this->currentDir;
+    }
+
+    public function makePhotoUrl($name)
+    {
+        return str_replace($this->refactorPath(Config::ROOT_DIR), "", $this->currentDir) . "/" . $name;
+    }
+
+    private function refactorPath($path)
+    {
+        return rtrim(str_replace('\\', '/', $path), '\\\/ ');
     }
 }

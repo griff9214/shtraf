@@ -52,4 +52,16 @@ class DBCarList implements CarList
         $result->execute();
         return $result;
     }
+
+    public function actualizeFines(Car $car, array $fines)
+    {
+        $finesInDb = $this->query("SELECT billId FROM fines WHERE car_id = {$car->id}")->fetch(PDO::FETCH_NUM);
+
+        $billIds = array_reduce($fines, function ($res, $fine) {
+            $res[] = $fine->billId;
+            return $res;
+        }, []);
+        return array_diff($finesInDb, $billIds);
+
+    }
 }
